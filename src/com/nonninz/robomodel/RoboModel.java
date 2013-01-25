@@ -340,14 +340,18 @@ public abstract class RoboModel {
         String fieldName;
         for (final Field f : fields) {
             fieldName = f.getName();
-            final boolean accessible = f.isAccessible();
-            f.setAccessible(true);
-            try {
+            if (f.isAnnotationPresent(HasMany.class)) {
+              b.append(fieldName + ": (RoboModel Child), ");
+            } else {
+              final boolean accessible = f.isAccessible();
+              f.setAccessible(true);
+              try {
                 b.append(fieldName + ": " + f.get(this) + ", ");
-            } catch (final IllegalAccessException e) {
+              } catch (final IllegalAccessException e) {
                 b.append(fieldName + ": (INACCESSIBLE), ");
+              }
+              f.setAccessible(accessible);
             }
-            f.setAccessible(accessible);
         }
         b.append("}");
 
