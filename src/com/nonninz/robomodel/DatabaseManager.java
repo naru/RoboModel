@@ -189,7 +189,6 @@ class DatabaseManager {
         }
         
         // For optimizing speed, first try to save it. Then deal with errors (like table/field not existing);
-        long id;
         try {
             model.mId = attemptSave(model.getTableName(), cv, model.mId, database);
         } catch (final SQLiteException ex) {

@@ -64,8 +64,10 @@ public class ModelTestCase extends AndroidTestCase {
         
         ParentTestModel loadedParent = parentManager.last();
         
+        // Test that parent loaded the children
         assertEquals(3, loadedParent.testModels.size());
         
+        // Test for backreference to the parent
         for (TestModel child: loadedParent.testModels) {
             assertEquals(parent, child.parent);
         }

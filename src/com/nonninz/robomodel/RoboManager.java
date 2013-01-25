@@ -16,7 +16,6 @@
 package com.nonninz.robomodel;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -234,6 +233,15 @@ public class RoboManager<T extends RoboModel> {
                     String orderBy) {
         final long[] ids = getSelectedModelIds(selection, selectionArgs, groupBy, having, orderBy);
         return getRecords(ids);
+    }
+
+    /**
+     * @param name - foreign key field name
+     * @param id - parent models mId
+     */
+    public List<T> findAllByParent(String name, long id) {
+        return where(String.format("%s = ?", name), 
+            new String[] { String.valueOf(id) });
     }
 
 }

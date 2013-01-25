@@ -109,7 +109,6 @@ public abstract class RoboModel {
             saved = saved || field.isAnnotationPresent(Save.class);
             saved = saved || !whitelist && Modifier.isPublic(field.getModifiers());
             saved = saved && !field.isAnnotationPresent(Exclude.class);
-            saved = saved && !field.isAnnotationPresent(HasMany.class);
 
             if (saved) {
                 savedFields.add(field);
@@ -192,6 +191,26 @@ public abstract class RoboModel {
                 }
             } else if (field.isAnnotationPresent(HasMany.class)) {
                 // TODO: load children
+                HasMany hasMany = field.getAnnotation(HasMany.class);
+                
+                String foreignKeyName = null;
+                Field[] childFields = hasMany.value().getDeclaredFields();
+                for (Field childField: childFields) {
+                  if (childField.isAnnotationPresent(BelongsTo.class)) {
+                    if (childField.getAnnotation(BelongsTo.class).value() == mClass) {
+                      // Get the Foreign Key name from child model's parent field declaration
+                      foreignKeyName = childField.getName();
+                      // TODO Set the back reference to parent
+                      // childField.set(mClass, this);
+                    }
+                  }
+                }
+                
+                if (foreignKeyName != null) {
+                  RoboManager<?> childManager = RoboManager.get(mContext, hasMany.value());
+                  List<?> children = childManager.findAllByParent(foreignKeyName, getId());
+                  field.set(this, children);
+                }
             } else if (field.isAnnotationPresent(BelongsTo.class)) {
                 // TODO: load parent????????
             } else {
@@ -228,7 +247,7 @@ public abstract class RoboModel {
         // Retrieve current entry in the database
         final SQLiteDatabase db = mDatabaseManager.openOrCreateDatabase(getDatabaseName());
         Cursor query;
-        
+
         /*
          * Try to query the table. If the Table doesn't exist, fix the DB and re-run the query. 
          */
@@ -263,7 +282,7 @@ public abstract class RoboModel {
         final Class<?> type = field.getType();
         final boolean wasAccessible = field.isAccessible();
         field.setAccessible(true);
-
+        
         try {
             if (type == String.class) {
                 cv.put(field.getName(), (String) field.get(this));
@@ -288,14 +307,14 @@ public abstract class RoboModel {
                     final String str = (String) method.invoke(value);
                     cv.put(field.getName(), str);
                 }
-        } else if (field.isAnnotationPresent(BelongsTo.class)) {
-            RoboModel parent = (RoboModel) field.get(this);
-            if (parent != null) {
-                cv.put(field.getName(), parent.getId());
-            } else {
-                cv.putNull(field.getName());
+            } else if (field.isAnnotationPresent(BelongsTo.class)) {
+                RoboModel parent = (RoboModel) field.get(this);
+                if (parent != null) {
+                    cv.put(field.getName(), parent.getId());
+                } else {
+                    cv.putNull(field.getName());
+                }
             }
-        }
             else {
                 // Try to JSONify it (db column must be of type text)
                 final String json = mGson.toJson(field.get(this));
@@ -323,7 +342,7 @@ public abstract class RoboModel {
             if (column.equals(_ID)) {
                 continue;
             }
-
+            
             final List<Field> fields = getSavedFields();
             for (final Field field : fields) {
                 loadField(field, query);
