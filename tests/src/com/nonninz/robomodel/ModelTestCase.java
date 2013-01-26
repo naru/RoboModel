@@ -3,6 +3,7 @@ package com.nonninz.robomodel;
 import android.test.AndroidTestCase;
 
 import com.nonninz.robomodel.RoboManager;
+import com.nonninz.robomodel.exceptions.InstanceNotFoundException;
 
 public class ModelTestCase extends AndroidTestCase {
 
@@ -14,6 +15,13 @@ public class ModelTestCase extends AndroidTestCase {
 
         mManager = RoboManager.get(getContext(), TestModel.class);
         mManager.dropDatabase();
+    }
+    
+    @Override
+    protected void tearDown() throws Exception {
+        super.tearDown();
+        
+        mManager = null;
     }
 
 

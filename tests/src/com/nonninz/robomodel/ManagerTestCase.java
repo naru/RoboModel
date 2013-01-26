@@ -6,9 +6,9 @@ import android.test.AndroidTestCase;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.nonninz.robomodel.InstanceNotFoundException;
 import com.nonninz.robomodel.RoboManager;
 import com.nonninz.robomodel.TestModel.Answer;
+import com.nonninz.robomodel.exceptions.InstanceNotFoundException;
 
 public class ManagerTestCase extends AndroidTestCase {
     private RoboManager<TestModel> mManager;
