@@ -21,7 +21,6 @@ import static com.nonninz.robomodel.DatabaseManager.where;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,10 +33,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.nonninz.robomodel.annotations.BelongsTo;
-import com.nonninz.robomodel.annotations.Exclude;
-import com.nonninz.robomodel.annotations.ExcludeByDefault;
 import com.nonninz.robomodel.annotations.HasMany;
-import com.nonninz.robomodel.annotations.Save;
 
 public abstract class RoboModel {
     public static final long UNSAVED_MODEL_ID = -1;
@@ -77,7 +73,6 @@ public abstract class RoboModel {
         if (sDatabaseName == null) {
             sDatabaseName = mContext.getPackageName();
         }
-
         return sDatabaseName;
     }
 
@@ -95,21 +90,10 @@ public abstract class RoboModel {
     List<Field> getSavedFields() { //TODO: cache results
         final List<Field> savedFields = new ArrayList<Field>();
 
-        // Check if we have a blacklist or whitelist policy for this model
-        final boolean whitelist = getClass().isAnnotationPresent(ExcludeByDefault.class);
-
         final Field[] declaredFields = getClass().getDeclaredFields();
-        boolean saved;
+
         for (final Field field : declaredFields) {
-
-            saved = false;
-            saved = saved || field.isAnnotationPresent(Save.class);
-            saved = saved || !whitelist && Modifier.isPublic(field.getModifiers());
-            saved = saved && !field.isAnnotationPresent(Exclude.class);
-
-            if (saved) {
-                savedFields.add(field);
-            }
+          savedFields.add(field);
         }
 
         return savedFields;
