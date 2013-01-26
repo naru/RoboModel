@@ -78,6 +78,7 @@ public class DatabaseManagerTestCase extends AndroidTestCase {
         db.execSQL("CREATE TABLE Test (springField TEXT, _id integer primary key autoincrement)");
         db.execSQL("INSERT INTO Test (springField) VALUES ('Test1')");
         db.execSQL("INSERT INTO Test (springField) VALUES ('Test2')");
+        db.execSQL("INSERT INTO Test (springField) VALUES ('Test2')");
         
         Cursor beforeCursor = db.rawQuery("SELECT * FROM Test", null);
         assertEquals(2, beforeCursor.getColumnCount());
@@ -85,7 +86,7 @@ public class DatabaseManagerTestCase extends AndroidTestCase {
         mDatabaseManager.deleteAllRecords(TEST_DB_NAME, "Test");
         
         Cursor afterCursor = db.rawQuery("SELECT * FROM Test", null);
-        assertEquals(0, afterCursor.getColumnCount());
+        assertEquals(0, afterCursor.getCount());
     }
     
 }
