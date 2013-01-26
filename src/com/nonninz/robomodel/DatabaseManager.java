@@ -94,18 +94,13 @@ class DatabaseManager {
             return;
         }
 
-        // Otherwise, check if all fields exist
+        // Otherwise, check if all fields exist, add if needed
         for (final Field field : fields) {
             try {
-                // Get type of column
-                final Cursor typeCursor = db.rawQuery("select typeof (" + field.getName() + ") from "
-                                + tableName, null);
-                typeCursor.moveToFirst();
-                final String type = typeCursor.getString(0);
-                Ln.v("Type of %s is %s", field.getName(), type);
-
-                // TODO: correct type?
+                String sql = String.format("select typeof (%s) from %s", field.getName(), tableName);
+                db.rawQuery(sql, null);
             } catch (final SQLiteException e) {
+                Ln.d("Adding column %s %s", field.getName(), getTypeForField(field));
                 addColumn(tableName, field.getName(), getTypeForField(field), db);
             }
         }
