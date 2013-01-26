@@ -38,7 +38,6 @@ import com.nonninz.robomodel.annotations.Exclude;
 import com.nonninz.robomodel.annotations.ExcludeByDefault;
 import com.nonninz.robomodel.annotations.HasMany;
 import com.nonninz.robomodel.annotations.Save;
-import com.nonninz.robomodel.annotations.Table;
 
 public abstract class RoboModel {
     public static final long UNSAVED_MODEL_ID = -1;
@@ -75,15 +74,6 @@ public abstract class RoboModel {
     }
 
     public String getDatabaseName() {
-        if (sDatabaseName != null) {
-            return sDatabaseName;
-        }
-
-        final Table table = getClass().getAnnotation(Table.class);
-        if (table != null) {
-            sDatabaseName = table.value();
-        }
-
         if (sDatabaseName == null) {
             sDatabaseName = mContext.getPackageName();
         }
@@ -91,6 +81,13 @@ public abstract class RoboModel {
         return sDatabaseName;
     }
 
+    protected String getTableName() {
+        if (mTableName == null) {
+            mTableName = mClass.getSimpleName();
+        }
+        return mTableName;
+    }
+    
     public long getId() {
         return mId;
     }
@@ -116,23 +113,6 @@ public abstract class RoboModel {
         }
 
         return savedFields;
-    }
-
-    protected String getTableName() {
-        if (mTableName != null) {
-            return mTableName;
-        }
-
-        final Table table = getClass().getAnnotation(Table.class);
-        if (table != null) {
-            mTableName = table.value();
-        }
-
-        if (mTableName == null) {
-            mTableName = mClass.getSimpleName();
-        }
-
-        return mTableName;
     }
 
     public boolean isSaved() {
