@@ -17,26 +17,53 @@ package com.nonninz.robomodel;
 
 import static android.provider.BaseColumns._ID;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.List;
 
-import com.nonninz.robomodel.annotations.BelongsTo;
-import com.nonninz.robomodel.annotations.HasMany;
-
 import roboguice.util.Ln;
 import android.content.Context;
-import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
+
+import com.nonninz.robomodel.annotations.BelongsTo;
+import com.nonninz.robomodel.annotations.HasMany;
 
 class DatabaseManager {
     public static String where(long id) {
         return _ID + " = " + id;
     }
 
+    public static String getTypeForField(Field field) {
+      final Class<?> type = field.getType();
+
+      if (type == String.class) {
+          return "TEXT";
+      } else if (type == Boolean.TYPE) {
+          return "BOOLEAN";
+      } else if (type == Byte.TYPE) {
+          return "INTEGER";
+      } else if (type == Double.TYPE) {
+          return "REAL";
+      } else if (type == Float.TYPE) {
+          return "REAL";
+      } else if (type == Integer.TYPE) {
+          return "INTEGER";
+      } else if (type == Long.TYPE) {
+          return "INTEGER";
+      } else if (type == Short.TYPE) {
+          return "INTEGER";
+      } else if (type.isEnum()) {
+          return "TEXT";
+      } else if (field.isAnnotationPresent(BelongsTo.class)) {
+          return "INTEGER";
+      }
+      else {
+          return "TEXT";
+      }
+    }
+  
     private final Context mContext;
 
     /**
@@ -83,7 +110,7 @@ class DatabaseManager {
     void createOrPopulateTable(String tableName, List<Field> fields,
                     SQLiteDatabase db) {
       
-        Ln.d("Fixing table %s...", tableName);
+        Ln.d("Fixing table %s", tableName);
 
         // Check if table exists
         try {
@@ -122,36 +149,6 @@ class DatabaseManager {
         Ln.d("Creating table: %s", sql.toString());
         db.execSQL(sql.toString());
     }
-
-    private String getTypeForField(Field field) {
-        final Class<?> type = field.getType();
-
-        if (type == String.class) {
-            return "TEXT";
-        } else if (type == Boolean.TYPE) {
-            return "BOOLEAN";
-        } else if (type == Byte.TYPE) {
-            return "INTEGER";
-        } else if (type == Double.TYPE) {
-            return "REAL";
-        } else if (type == Float.TYPE) {
-            return "REAL";
-        } else if (type == Integer.TYPE) {
-            return "INTEGER";
-        } else if (type == Long.TYPE) {
-            return "INTEGER";
-        } else if (type == Short.TYPE) {
-            return "INTEGER";
-        } else if (type.isEnum()) {
-            return "TEXT";
-        } else if (field.isAnnotationPresent(BelongsTo.class)) {
-            return "INTEGER";
-        }
-        else {
-            return "TEXT";
-        }
-    }
-    
     
     /**
      * @param databaseName
