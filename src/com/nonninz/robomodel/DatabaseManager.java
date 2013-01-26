@@ -85,7 +85,7 @@ class DatabaseManager {
         db.execSQL(sql);
     }
 
-    private long attemptSave(String tableName, TypedContentValues values, long id,
+    private long insertOrUpdate(String tableName, TypedContentValues values, long id,
                     SQLiteDatabase database) {
         if (id == RoboModel.UNSAVED_MODEL_ID) {
             return database.insertOrThrow(tableName, null, values.toContentValues());
@@ -181,19 +181,24 @@ class DatabaseManager {
         
         // For optimizing speed, first try to save it. Then deal with errors (like table/field not existing);
         try {
-            model.mId = attemptSave(model.getTableName(), cv, model.mId, database);
+            model.mId = insertOrUpdate(model.getTableName(), cv, model.mId, database);
         } catch (final SQLiteException ex) {
             createOrPopulateTable(model.getTableName(), fields, database);
-            model.mId = attemptSave(model.getTableName(), cv, model.mId, database);
+            model.mId = insertOrUpdate(model.getTableName(), cv, model.mId, database);
         } finally {
             database.close();
         }
         
         // Save children
-        saveReferencedModels(model);
+        saveChildModels(model);
     }
 
-    private void saveReferencedModels(RoboModel model) {
+    /**
+     * Saves referenced child RoboModels annotated with @HasMany
+     *  
+     * @param model
+     */
+    private void saveChildModels(RoboModel model) {
         Field[] fields = model.getClass().getFields();
         for (Field field: fields) {
             if (field.isAnnotationPresent(HasMany.class)) {
