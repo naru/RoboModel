@@ -114,4 +114,46 @@ public class ModelTestCase extends AndroidTestCase {
         TestModel model = mManager.create();
         assertEquals(String.class, model.toJson().getClass());
     }
+
+    public void testCreateFromJson() throws InstanceNotFoundException {
+        String json = "{" +
+        		"springField: \"Hello1212\"," +
+        		"intField: 53252" +
+        		"}";
+        
+        TestModel model = mManager.create(json);
+        model.save();
+        
+        TestModel saved = mManager.last();  
+        
+        assertEquals("Hello1212", saved.springField);
+        assertEquals(53252, saved.intField);
+    }
+    
+    public void testCreateTreeFromJson() throws InstanceNotFoundException {
+        String json = "{" +
+                        "test: \"11\"," +
+                        "testModels:" +
+                    		"[{" +
+                            "springField: \"Hello1212\"," +
+                            "intField: 53252" +
+                            "}]" +
+                    "}";
+        
+        RoboManager<ParentTestModel> parentManager = RoboManager.get(getContext(), ParentTestModel.class);
+        ParentTestModel model = parentManager.create(json);
+        model.save();
+        
+        assertEquals(1, parentManager.all().size());
+        assertEquals(1, mManager.all().size());
+        
+        ParentTestModel saved = parentManager.last();  
+        
+        assertEquals("11", saved.test);
+        assertEquals(1, saved.testModels.size());
+
+        assertEquals("Hello1212", saved.testModels.get(0).springField);
+        assertEquals(53252, saved.testModels.get(0).intField);
+    }
+    
 }

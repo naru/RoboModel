@@ -51,16 +51,24 @@ public abstract class RoboModel {
 
     protected long mId = UNSAVED_MODEL_ID;
 
-    private final Class<? extends RoboModel> mClass = this.getClass();
     private Context mContext;
-    private final DatabaseManager mDatabaseManager;
+    private Class<? extends RoboModel> mClass;
+    private DatabaseManager mDatabaseManager;
     private final Gson mGson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
 
-    protected RoboModel(Context context) {
-        mContext = context;
-        mDatabaseManager = new DatabaseManager(context);
+    public RoboModel(Context context) {
+      ensureDependencies(context);
     }
-
+    
+    public void ensureDependencies(Context context) {
+        if (mContext == null)
+          mContext = context;
+        if (mDatabaseManager == null) 
+          mDatabaseManager = new DatabaseManager(context);
+        if (mClass == null)
+          mClass = this.getClass();
+    }
+    
     protected Context getContext() {
         return mContext;
     }
@@ -377,12 +385,18 @@ public abstract class RoboModel {
                 field.setAccessible(true);
                 
                 try {
-                    Class<? extends RoboModel> referencedModel = field.getAnnotation(HasMany.class).value();
+                    Class<? extends RoboModel> childModel = field.getAnnotation(HasMany.class).value();
                     if (Iterable.class.isAssignableFrom(field.getType())) {
                         Iterable<?> list = (Iterable<?>) field.get(this); 
                         for (Object item: list) {
-                            RoboModel cast = referencedModel.cast(item);
-                            cast.deepSave(this);
+                            RoboModel cast = childModel.cast(item);
+                            
+                            // Ensure Context etc. in case the tree was instantiated via Gson
+                            // - must be a better way to instantiate children with dependencies already 
+                            cast.ensureDependencies(mContext);
+                            
+                            cast.ensureParentReference(this);
+                            cast.save();
                         }
                     } else {
                         //TODO ??
@@ -396,7 +410,7 @@ public abstract class RoboModel {
         }
     } 
 
-    void deepSave(RoboModel parentModel) {
+    void ensureParentReference(RoboModel parentModel) {
         // There must be a corresponding BelongsTo field for parentModel
         Field[] fields = getClass().getFields();
         for (Field field: fields) {
@@ -409,9 +423,6 @@ public abstract class RoboModel {
                     // Can't happen
                     throw new RuntimeException(e);
                 }
-                
-                save();
-                
             }
         }
     }

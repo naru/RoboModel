@@ -101,7 +101,7 @@ class DatabaseManager {
 
     long insertOrUpdate(String tableName, TypedContentValues values, long id,
                     SQLiteDatabase database) {
-        if (id == RoboModel.UNSAVED_MODEL_ID) {
+        if (id < 1) {
             return database.insertOrThrow(tableName, null, values.toContentValues());
         } else {
             database.update(tableName, values.toContentValues(), where(id), null);
