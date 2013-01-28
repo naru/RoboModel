@@ -36,23 +36,26 @@ import com.nonninz.robomodel.annotations.BelongsTo;
 import com.nonninz.robomodel.annotations.HasMany;
 import com.nonninz.robomodel.exceptions.InstanceNotFoundException;
 
+/**
+ * RoboModel:
+ * 1. Provides ORM style methods to operate with Model instances
+ *  - save()
+ *  - delete()
+ *  - reload()
+ * 
+ */
 public abstract class RoboModel {
     public static final long UNSAVED_MODEL_ID = -1;
 
-    private static String sDatabaseName;
     private String mTableName;
 
     protected long mId = UNSAVED_MODEL_ID;
 
-    //TODO: Investigate the getClass() execution time
     private final Class<? extends RoboModel> mClass = this.getClass();
     private Context mContext;
     private final DatabaseManager mDatabaseManager;
     private final Gson mGson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
 
-    /**
-     * 
-     */
     protected RoboModel(Context context) {
         mContext = context;
         mDatabaseManager = new DatabaseManager(context);
@@ -71,13 +74,10 @@ public abstract class RoboModel {
     }
 
     public String getDatabaseName() {
-        if (sDatabaseName == null) {
-            sDatabaseName = mContext.getPackageName();
-        }
-        return sDatabaseName;
+        return mDatabaseManager.getDatabaseName();
     }
 
-    protected String getTableName() {
+    String getTableName() {
         if (mTableName == null) {
             mTableName = mClass.getSimpleName();
         }
@@ -120,7 +120,7 @@ public abstract class RoboModel {
         field.setAccessible(true);
 
         /*
-         * TODO: There is the pontential of a problem here:
+         * TODO: There is the potential of a problem here:
          * What happens if the developer changes the type of a field between releases?
          * 
          * If he saves first, then the column type will be changed (In the future).
@@ -238,9 +238,26 @@ public abstract class RoboModel {
     }
 
     public void save() {
-        // TODO: check no fields to save
+      final SQLiteDatabase database = mDatabaseManager.openOrCreateDatabase(getDatabaseName());
 
-        mDatabaseManager.saveModel(this);
+      List<Field> fields = getSavedFields();
+      final TypedContentValues cv = new TypedContentValues(fields.size());
+      for (final Field field : fields) {
+          saveField(field, cv);
+      }
+      
+      // First try to save it. Then deal with errors (like table/field not existing);
+      try {
+          mId = mDatabaseManager.insertOrUpdate(getTableName(), cv, mId, database);
+      } catch (final SQLiteException ex) {
+          mDatabaseManager.createOrPopulateTable(getTableName(), fields, database);
+          mId = mDatabaseManager.insertOrUpdate(getTableName(), cv, mId, database);
+      } finally {
+          database.close();
+      }
+      
+      // Save children
+      saveChildModels();
     }
 
     void saveField(Field field, TypedContentValues cv) {
@@ -346,6 +363,38 @@ public abstract class RoboModel {
       Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
       return gson.toJson(this);
     }
+    
+    /**
+     * Saves referenced child RoboModels annotated with @HasMany
+     *  
+     * @param model
+     */
+    private void saveChildModels() {
+        Field[] fields = this.getClass().getFields();
+        for (Field field: fields) {
+            if (field.isAnnotationPresent(HasMany.class)) {
+                final boolean wasAccessible = field.isAccessible();
+                field.setAccessible(true);
+                
+                try {
+                    Class<? extends RoboModel> referencedModel = field.getAnnotation(HasMany.class).value();
+                    if (Iterable.class.isAssignableFrom(field.getType())) {
+                        Iterable<?> list = (Iterable<?>) field.get(this); 
+                        for (Object item: list) {
+                            RoboModel cast = referencedModel.cast(item);
+                            cast.deepSave(this);
+                        }
+                    } else {
+                        //TODO ??
+                    }
+                } catch (IllegalAccessException e) {
+                    // Can't happen
+                } finally {
+                    field.setAccessible(wasAccessible);
+                }
+            }
+        }
+    } 
 
     void deepSave(RoboModel parentModel) {
         // There must be a corresponding BelongsTo field for parentModel
@@ -366,4 +415,5 @@ public abstract class RoboModel {
             }
         }
     }
+    
 }

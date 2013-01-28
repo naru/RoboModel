@@ -28,11 +28,11 @@ public class DatabaseManagerTestCase extends AndroidTestCase {
     public void testCreateOrPopulateTable() throws NoSuchFieldException {
         List<Field> fields = new ArrayList<Field>();
         TestModel model = new TestModel(mContext);
-        
+
         fields.add(model.getClass().getDeclaredField("springField"));
         fields.add(model.getClass().getDeclaredField("bowlFish"));
         fields.add(model.getClass().getDeclaredField("parent"));
-        
+
         SQLiteDatabase db = mDatabaseManager.openOrCreateDatabase(TEST_DB_NAME);
         mDatabaseManager.createOrPopulateTable("Test", fields, db);
 
@@ -47,15 +47,15 @@ public class DatabaseManagerTestCase extends AndroidTestCase {
             }
         }
         assertEquals("CREATE TABLE Test (" +
-        		"springField TEXT, " +
-        		"bowlFish BOOLEAN, " +
-        		"parent INTEGER, " +
-        		"_id integer primary key autoincrement)", sql);
+                        "springField TEXT, " +
+                        "bowlFish BOOLEAN, " +
+                        "parent INTEGER, " +
+                        "_id integer primary key autoincrement)", sql);
 
         // Table Columns should be added after we alter the fields collection
         fields.add(model.getClass().getDeclaredField("doubleField"));
         mDatabaseManager.createOrPopulateTable("Test", fields, db);
-        
+
         sql = null;
         tablesCursor = db.rawQuery("SELECT * FROM SQLITE_MASTER", null);
         while (tablesCursor.moveToNext()) {
@@ -66,27 +66,38 @@ public class DatabaseManagerTestCase extends AndroidTestCase {
             }
         }
         assertEquals("CREATE TABLE Test (" +
-                "springField TEXT, " +
-                "bowlFish BOOLEAN, " +
-                "parent INTEGER, " +
-                "_id integer primary key autoincrement, " +
-                "doubleField REAL)", sql);
+                        "springField TEXT, " +
+                        "bowlFish BOOLEAN, " +
+                        "parent INTEGER, " +
+                        "_id integer primary key autoincrement, " +
+                        "doubleField REAL)", sql);
     }
-    
+
     public void testDeleteAll() throws SecurityException, NoSuchFieldException {
         SQLiteDatabase db = mDatabaseManager.openOrCreateDatabase(TEST_DB_NAME);
         db.execSQL("CREATE TABLE Test (springField TEXT, _id integer primary key autoincrement)");
         db.execSQL("INSERT INTO Test (springField) VALUES ('Test1')");
         db.execSQL("INSERT INTO Test (springField) VALUES ('Test2')");
         db.execSQL("INSERT INTO Test (springField) VALUES ('Test2')");
-        
+
         Cursor beforeCursor = db.rawQuery("SELECT * FROM Test", null);
         assertEquals(2, beforeCursor.getColumnCount());
-        
+
         mDatabaseManager.deleteAllRecords(TEST_DB_NAME, "Test");
-        
+
         Cursor afterCursor = db.rawQuery("SELECT * FROM Test", null);
         assertEquals(0, afterCursor.getCount());
     }
-    
+
+    public void testDeleteRecord() {
+        SQLiteDatabase db = mDatabaseManager.openOrCreateDatabase(TEST_DB_NAME);
+        db.execSQL("CREATE TABLE Test (springField TEXT, _id integer primary key autoincrement)");
+        db.execSQL("INSERT INTO Test (springField) VALUES ('Test1')");
+        db.execSQL("INSERT INTO Test (springField) VALUES ('Test2')");
+
+        mDatabaseManager.deleteRecord(TEST_DB_NAME, "Test", 1);
+        Cursor afterCursor = db.rawQuery("SELECT * FROM Test", null);
+        assertEquals(1, afterCursor.getCount());
+    }
+
 }

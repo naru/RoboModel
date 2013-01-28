@@ -28,8 +28,14 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 
 import com.nonninz.robomodel.annotations.BelongsTo;
-import com.nonninz.robomodel.annotations.HasMany;
 
+/**
+ * 
+ * DatabaseManager:
+ * 1. Ensures the correct schema for the Database 
+ * 2. Holds the database specific configuration
+ *  
+ */
 class DatabaseManager {
     public static String where(long id) {
         return _ID + " = " + id;
@@ -64,6 +70,7 @@ class DatabaseManager {
       }
     }
   
+    private static String sDatabaseName;
     private final Context mContext;
 
     /**
@@ -71,6 +78,13 @@ class DatabaseManager {
      */
     public DatabaseManager(Context context) {
         mContext = context;
+    }
+    
+    public String getDatabaseName() {
+      if (sDatabaseName == null) {
+          sDatabaseName = mContext.getPackageName();
+      }
+      return sDatabaseName;
     }
 
     /**
@@ -85,7 +99,7 @@ class DatabaseManager {
         db.execSQL(sql);
     }
 
-    private long insertOrUpdate(String tableName, TypedContentValues values, long id,
+    long insertOrUpdate(String tableName, TypedContentValues values, long id,
                     SQLiteDatabase database) {
         if (id == RoboModel.UNSAVED_MODEL_ID) {
             return database.insertOrThrow(tableName, null, values.toContentValues());
@@ -170,58 +184,4 @@ class DatabaseManager {
         return mContext.openOrCreateDatabase(databaseName, Context.MODE_PRIVATE, null);
     }
 
-    void saveModel(RoboModel model) {
-        final SQLiteDatabase database = openOrCreateDatabase(model.getDatabaseName());
-
-        List<Field> fields = model.getSavedFields();
-        final TypedContentValues cv = new TypedContentValues(fields.size());
-        for (final Field field : fields) {
-            model.saveField(field, cv);
-        }
-        
-        // For optimizing speed, first try to save it. Then deal with errors (like table/field not existing);
-        try {
-            model.mId = insertOrUpdate(model.getTableName(), cv, model.mId, database);
-        } catch (final SQLiteException ex) {
-            createOrPopulateTable(model.getTableName(), fields, database);
-            model.mId = insertOrUpdate(model.getTableName(), cv, model.mId, database);
-        } finally {
-            database.close();
-        }
-        
-        // Save children
-        saveChildModels(model);
-    }
-
-    /**
-     * Saves referenced child RoboModels annotated with @HasMany
-     *  
-     * @param model
-     */
-    private void saveChildModels(RoboModel model) {
-        Field[] fields = model.getClass().getFields();
-        for (Field field: fields) {
-            if (field.isAnnotationPresent(HasMany.class)) {
-                final boolean wasAccessible = field.isAccessible();
-                field.setAccessible(true);
-                
-                try {
-                    Class<? extends RoboModel> referencedModel = field.getAnnotation(HasMany.class).value();
-                    if (Iterable.class.isAssignableFrom(field.getType())) {
-                        Iterable<?> list = (Iterable<?>) field.get(model); 
-                        for (Object item: list) {
-                            RoboModel cast = referencedModel.cast(item);
-                            cast.deepSave(model);
-                        }
-                    } else {
-                        //TODO ??
-                    }
-                } catch (IllegalAccessException e) {
-                    // Can't happen
-                } finally {
-                    field.setAccessible(wasAccessible);
-                }
-            }
-        }
-    } 
 }
