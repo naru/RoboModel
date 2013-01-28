@@ -32,5 +32,5 @@ import com.nonninz.robomodel.RoboModel;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.FIELD })
 public @interface HasMany {
-    Class<? extends RoboModel> value();
+  Class<? extends RoboModel> value();
 }

@@ -31,157 +31,153 @@ import com.nonninz.robomodel.annotations.BelongsTo;
 
 /**
  * 
- * DatabaseManager:
+ * DatabaseManager: 
  * 1. Ensures the correct schema for the Database 
  * 2. Holds the database specific configuration
- *  
+ * 
  */
 class DatabaseManager {
-    public static String where(long id) {
-        return _ID + " = " + id;
+  public static String where(long id) {
+    return _ID + " = " + id;
+  }
+
+  public static String getTypeForField(Field field) {
+    final Class<?> type = field.getType();
+
+    if (type == String.class) {
+      return "TEXT";
+    } else if (type == Boolean.TYPE) {
+      return "BOOLEAN";
+    } else if (type == Byte.TYPE) {
+      return "INTEGER";
+    } else if (type == Double.TYPE) {
+      return "REAL";
+    } else if (type == Float.TYPE) {
+      return "REAL";
+    } else if (type == Integer.TYPE) {
+      return "INTEGER";
+    } else if (type == Long.TYPE) {
+      return "INTEGER";
+    } else if (type == Short.TYPE) {
+      return "INTEGER";
+    } else if (type.isEnum()) {
+      return "TEXT";
+    } else if (field.isAnnotationPresent(BelongsTo.class)) {
+      return "INTEGER";
+    } else {
+      return "TEXT";
+    }
+  }
+
+  private static String sDatabaseName;
+  private final Context mContext;
+
+  /**
+   * @param context
+   */
+  public DatabaseManager(Context context) {
+    mContext = context;
+  }
+
+  public String getDatabaseName() {
+    if (sDatabaseName == null) {
+      sDatabaseName = mContext.getPackageName();
+    }
+    return sDatabaseName;
+  }
+
+  /**
+   * @param tableName
+   * @param column
+   * @param type
+   * @param db
+   */
+  private void addColumn(String tableName, String column, String type, SQLiteDatabase db) {
+    final String sql = String.format("ALTER TABLE %s ADD %s %s;", tableName, column, type);
+    db.execSQL(sql);
+  }
+
+  long insertOrUpdate(String tableName, TypedContentValues values, long id, SQLiteDatabase database) {
+    if (id < 1) {
+      return database.insertOrThrow(tableName, null, values.toContentValues());
+    } else {
+      database.update(tableName, values.toContentValues(), where(id), null);
+      return id;
+    }
+  }
+
+  /**
+   * Creates the table or populates it with missing fields
+   * 
+   * @param tableName
+   *          The name of the table
+   * @param values
+   *          The columns of the table
+   * @param db
+   *          The database where the table is situated
+   * @throws SQLException
+   *           if it cannot create the table
+   */
+  void createOrPopulateTable(String tableName, List<Field> fields, SQLiteDatabase db) {
+
+    Ln.d("Fixing table %s", tableName);
+
+    // Check if table exists
+    try {
+      DatabaseUtils.queryNumEntries(db, tableName);
+    } catch (final SQLiteException ex) {
+      // If it doesn't, create it and return
+      createTable(tableName, fields, db);
+      return;
     }
 
-    public static String getTypeForField(Field field) {
-      final Class<?> type = field.getType();
-
-      if (type == String.class) {
-          return "TEXT";
-      } else if (type == Boolean.TYPE) {
-          return "BOOLEAN";
-      } else if (type == Byte.TYPE) {
-          return "INTEGER";
-      } else if (type == Double.TYPE) {
-          return "REAL";
-      } else if (type == Float.TYPE) {
-          return "REAL";
-      } else if (type == Integer.TYPE) {
-          return "INTEGER";
-      } else if (type == Long.TYPE) {
-          return "INTEGER";
-      } else if (type == Short.TYPE) {
-          return "INTEGER";
-      } else if (type.isEnum()) {
-          return "TEXT";
-      } else if (field.isAnnotationPresent(BelongsTo.class)) {
-          return "INTEGER";
+    // Otherwise, check if all fields exist, add if needed
+    for (final Field field : fields) {
+      try {
+        String sql = String.format("select typeof (%s) from %s", field.getName(), tableName);
+        db.rawQuery(sql, null);
+      } catch (final SQLiteException e) {
+        Ln.d("Adding column %s %s", field.getName(), getTypeForField(field));
+        addColumn(tableName, field.getName(), getTypeForField(field), db);
       }
-      else {
-          return "TEXT";
-      }
     }
-  
-    private static String sDatabaseName;
-    private final Context mContext;
+  }
 
-    /**
-     * @param context
-     */
-    public DatabaseManager(Context context) {
-        mContext = context;
+  /**
+   * @param tableName
+   * @param values
+   * @param db
+   * @return
+   */
+  private void createTable(String tableName, List<Field> fields, SQLiteDatabase db) {
+    final StringBuilder sql = new StringBuilder("CREATE TABLE ").append(tableName).append(" (");
+
+    for (final Field field : fields) {
+      sql.append(field.getName()).append(" ").append(getTypeForField(field)).append(", ");
     }
-    
-    public String getDatabaseName() {
-      if (sDatabaseName == null) {
-          sDatabaseName = mContext.getPackageName();
-      }
-      return sDatabaseName;
-    }
+    sql.append(_ID).append(" integer primary key autoincrement);");
+    Ln.d("Creating table: %s", sql.toString());
+    db.execSQL(sql.toString());
+  }
 
-    /**
-     * @param tableName
-     * @param column
-     * @param type
-     * @param db
-     */
-    private void addColumn(String tableName, String column, String type, SQLiteDatabase db) {
-        final String sql = String.format("ALTER TABLE %s ADD %s %s;", tableName, column,
-                        type);
-        db.execSQL(sql);
-    }
+  /**
+   * @param databaseName
+   * @param tableName
+   */
+  public void deleteAllRecords(String databaseName, String tableName) {
+    final SQLiteDatabase db = openOrCreateDatabase(databaseName);
+    db.delete(tableName, null, null);
+    db.close();
+  }
 
-    long insertOrUpdate(String tableName, TypedContentValues values, long id,
-                    SQLiteDatabase database) {
-        if (id < 1) {
-            return database.insertOrThrow(tableName, null, values.toContentValues());
-        } else {
-            database.update(tableName, values.toContentValues(), where(id), null);
-            return id;
-        }
-    }
+  void deleteRecord(String databaseName, String tableName, long id) {
+    final SQLiteDatabase db = openOrCreateDatabase(databaseName);
+    db.delete(tableName, where(id), null);
+    db.close();
+  }
 
-    /**
-     * Creates the table or populates it with missing fields
-     * 
-     * @param tableName
-     *            The name of the table
-     * @param values
-     *            The columns of the table
-     * @param db
-     *            The database where the table is situated
-     * @throws SQLException
-     *             if it cannot create the table
-     */
-    void createOrPopulateTable(String tableName, List<Field> fields,
-                    SQLiteDatabase db) {
-      
-        Ln.d("Fixing table %s", tableName);
-
-        // Check if table exists
-        try {
-            DatabaseUtils.queryNumEntries(db, tableName);
-        } catch (final SQLiteException ex) {
-            // If it doesn't, create it and return
-            createTable(tableName, fields, db);
-            return;
-        }
-
-        // Otherwise, check if all fields exist, add if needed
-        for (final Field field : fields) {
-            try {
-                String sql = String.format("select typeof (%s) from %s", field.getName(), tableName);
-                db.rawQuery(sql, null);
-            } catch (final SQLiteException e) {
-                Ln.d("Adding column %s %s", field.getName(), getTypeForField(field));
-                addColumn(tableName, field.getName(), getTypeForField(field), db);
-            }
-        }
-    }
-
-    /**
-     * @param tableName
-     * @param values
-     * @param db
-     * @return
-     */
-    private void createTable(String tableName, List<Field> fields, SQLiteDatabase db) {
-        final StringBuilder sql = new StringBuilder("CREATE TABLE ").append(tableName).append(" (");
-
-        for (final Field field : fields) {
-            sql.append(field.getName()).append(" ").append(getTypeForField(field)).append(", ");
-        }
-        sql.append(_ID).append(" integer primary key autoincrement);");
-        Ln.d("Creating table: %s", sql.toString());
-        db.execSQL(sql.toString());
-    }
-    
-    /**
-     * @param databaseName
-     * @param tableName
-     */
-    public void deleteAllRecords(String databaseName, String tableName) {
-        final SQLiteDatabase db = openOrCreateDatabase(databaseName);
-        db.delete(tableName, null, null);
-        db.close();
-    }
-
-    void deleteRecord(String databaseName, String tableName, long id) {
-        final SQLiteDatabase db = openOrCreateDatabase(databaseName);
-        db.delete(tableName, where(id), null);
-        db.close();
-    }
-
-    SQLiteDatabase openOrCreateDatabase(String databaseName) {
-        return mContext.openOrCreateDatabase(databaseName, Context.MODE_PRIVATE, null);
-    }
+  SQLiteDatabase openOrCreateDatabase(String databaseName) {
+    return mContext.openOrCreateDatabase(databaseName, Context.MODE_PRIVATE, null);
+  }
 
 }

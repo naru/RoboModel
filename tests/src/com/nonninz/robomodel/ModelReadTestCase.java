@@ -13,7 +13,7 @@ public class ModelReadTestCase extends AndroidTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        
+
         final Context context = getContext();
         final RoboManager<TestModel> manager = RoboManager.get(context, TestModel.class);
 

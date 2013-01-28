@@ -15,7 +15,6 @@
  */
 package com.nonninz.robomodel.exceptions;
 
-
 public class InstanceNotFoundException extends Exception {
   /**
    * 

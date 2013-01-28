@@ -25,381 +25,380 @@ import android.content.ContentValues;
  * This class is a wrapper of {@link ContentValues} that also stores the type of the field.
  */
 public final class TypedContentValues {
-    enum ElementType {
-        BOOLEAN, INTEGER, REAL, TEXT, BLOB
+  enum ElementType {
+    BOOLEAN, INTEGER, REAL, TEXT, BLOB
+  }
+
+  public static final String TAG = "TypedContentValues2";
+
+  /** Holds the types values */
+  private HashMap<String, ElementType> mTypes;
+  private final ContentValues mValues;
+
+  /**
+   * Creates an empty set of values using the default initial size
+   */
+  public TypedContentValues() {
+    mValues = new ContentValues();
+    mTypes = new HashMap<String, ElementType>();
+  }
+
+  /**
+   * Creates an empty set of values using the given initial size
+   * 
+   * @param size
+   *          the initial size of the set of values
+   */
+  public TypedContentValues(int size) {
+    mValues = new ContentValues(size);
+    mTypes = new HashMap<String, ElementType>(size);
+  }
+
+  /**
+   * Creates a set of values copied from the given set
+   * 
+   * @param from
+   *          the values to copy
+   */
+  public TypedContentValues(TypedContentValues from) {
+    mTypes = new HashMap<String, ElementType>(from.mTypes);
+    mValues = new ContentValues(from.mValues);
+  }
+
+  /**
+   * Removes all values.
+   */
+  public void clear() {
+    mValues.clear();
+    mTypes.clear();
+  }
+
+  /**
+   * Returns true if this object has the named value.
+   * 
+   * @param key
+   *          the value to check for
+   * @return {@code true} if the value is present, {@code false} otherwise
+   */
+  public boolean containsKey(String key) {
+    return mValues.containsKey(key);
+  }
+
+  @Override
+  public boolean equals(Object object) {
+    if (!(object instanceof TypedContentValues)) {
+      return false;
     }
+    boolean equals = mValues.equals(((TypedContentValues) object).mValues);
+    return equals && mTypes.equals(((TypedContentValues) object).mTypes);
+  }
 
-    public static final String TAG = "TypedContentValues2";
+  /**
+   * Gets a value. Valid value types are {@link String}, {@link Boolean}, and {@link Number} implementations.
+   * 
+   * @param key
+   *          the value to get
+   * @return the data for the value
+   */
+  public Object get(String key) {
+    return mValues.get(key);
+  }
 
-    /** Holds the types values */
-    private HashMap<String, ElementType> mTypes;
-    private final ContentValues mValues;
+  /**
+   * Gets a value and converts it to a Boolean.
+   * 
+   * @param key
+   *          the value to get
+   * @return the Boolean value, or null if the value is missing or cannot be converted
+   */
+  public Boolean getAsBoolean(String key) {
+    return mValues.getAsBoolean(key);
+  }
 
-    /**
-     * Creates an empty set of values using the default initial size
-     */
-    public TypedContentValues() {
-        mValues = new ContentValues();
-        mTypes = new HashMap<String, ElementType>();
-    }
+  /**
+   * Gets a value and converts it to a Byte.
+   * 
+   * @param key
+   *          the value to get
+   * @return the Byte value, or null if the value is missing or cannot be converted
+   */
+  public Byte getAsByte(String key) {
+    return mValues.getAsByte(key);
+  }
 
-    /**
-     * Creates an empty set of values using the given initial size
-     * 
-     * @param size
-     *            the initial size of the set of values
-     */
-    public TypedContentValues(int size) {
-        mValues = new ContentValues(size);
-        mTypes = new HashMap<String, ElementType>(size);
-    }
+  /**
+   * Gets a value that is a byte array. Note that this method will not convert any other types to byte arrays.
+   * 
+   * @param key
+   *          the value to get
+   * @return the byte[] value, or null is the value is missing or not a byte[]
+   */
+  public byte[] getAsByteArray(String key) {
+    return mValues.getAsByteArray(key);
+  }
 
-    /**
-     * Creates a set of values copied from the given set
-     * 
-     * @param from
-     *            the values to copy
-     */
-    public TypedContentValues(TypedContentValues from) {
-        mTypes = new HashMap<String, ElementType>(from.mTypes);
-        mValues = new ContentValues(from.mValues);
-    }
+  /**
+   * Gets a value and converts it to a Double.
+   * 
+   * @param key
+   *          the value to get
+   * @return the Double value, or null if the value is missing or cannot be converted
+   */
+  public Double getAsDouble(String key) {
+    return mValues.getAsDouble(key);
+  }
 
-    /**
-     * Removes all values.
-     */
-    public void clear() {
-        mValues.clear();
-        mTypes.clear();
-    }
+  /**
+   * Gets a value and converts it to a Float.
+   * 
+   * @param key
+   *          the value to get
+   * @return the Float value, or null if the value is missing or cannot be converted
+   */
+  public Float getAsFloat(String key) {
+    return mValues.getAsFloat(key);
+  }
 
-    /**
-     * Returns true if this object has the named value.
-     * 
-     * @param key
-     *            the value to check for
-     * @return {@code true} if the value is present, {@code false} otherwise
-     */
-    public boolean containsKey(String key) {
-        return mValues.containsKey(key);
-    }
+  /**
+   * Gets a value and converts it to an Integer.
+   * 
+   * @param key
+   *          the value to get
+   * @return the Integer value, or null if the value is missing or cannot be converted
+   */
+  public Integer getAsInteger(String key) {
+    return mValues.getAsInteger(key);
+  }
 
-    @Override
-    public boolean equals(Object object) {
-        if (!(object instanceof TypedContentValues)) {
-            return false;
-        }
-        boolean equals = mValues.equals(((TypedContentValues) object).mValues);
-        return equals && mTypes.equals(((TypedContentValues) object).mTypes);
-    }
+  /**
+   * Gets a value and converts it to a Long.
+   * 
+   * @param key
+   *          the value to get
+   * @return the Long value, or null if the value is missing or cannot be converted
+   */
+  public Long getAsLong(String key) {
+    return mValues.getAsLong(key);
+  }
 
-    /**
-     * Gets a value. Valid value types are {@link String}, {@link Boolean}, and {@link Number} implementations.
-     * 
-     * @param key
-     *            the value to get
-     * @return the data for the value
-     */
-    public Object get(String key) {
-        return mValues.get(key);
-    }
+  /**
+   * Gets a value and converts it to a Short.
+   * 
+   * @param key
+   *          the value to get
+   * @return the Short value, or null if the value is missing or cannot be converted
+   */
+  public Short getAsShort(String key) {
+    return mValues.getAsShort(key);
+  }
 
-    /**
-     * Gets a value and converts it to a Boolean.
-     * 
-     * @param key
-     *            the value to get
-     * @return the Boolean value, or null if the value is missing or cannot be converted
-     */
-    public Boolean getAsBoolean(String key) {
-        return mValues.getAsBoolean(key);
-    }
+  /**
+   * Gets a value and converts it to a String.
+   * 
+   * @param key
+   *          the value to get
+   * @return the String for the value
+   */
+  public String getAsString(String key) {
+    return mValues.getAsString(key);
+  }
 
-    /**
-     * Gets a value and converts it to a Byte.
-     * 
-     * @param key
-     *            the value to get
-     * @return the Byte value, or null if the value is missing or cannot be converted
-     */
-    public Byte getAsByte(String key) {
-        return mValues.getAsByte(key);
-    }
+  /**
+   * Get the type of a value.
+   * 
+   * @param key
+   *          the value to get
+   * @return the type of the value, or null is the value is missing
+   */
+  public ElementType getType(String key) {
+    return mTypes.get(key);
+  }
 
-    /**
-     * Gets a value that is a byte array. Note that this method will not convert
-     * any other types to byte arrays.
-     * 
-     * @param key
-     *            the value to get
-     * @return the byte[] value, or null is the value is missing or not a byte[]
-     */
-    public byte[] getAsByteArray(String key) {
-        return mValues.getAsByteArray(key);
-    }
+  @Override
+  public int hashCode() {
+    int code = 17;
+    code = 31 * code + mValues.hashCode();
+    code = 31 * code + mTypes.hashCode();
+    return code;
+  }
 
-    /**
-     * Gets a value and converts it to a Double.
-     * 
-     * @param key
-     *            the value to get
-     * @return the Double value, or null if the value is missing or cannot be converted
-     */
-    public Double getAsDouble(String key) {
-        return mValues.getAsDouble(key);
-    }
+  /**
+   * Adds a value to the set.
+   * 
+   * @param key
+   *          the name of the value to put
+   * @param value
+   *          the data for the value to put
+   */
+  public void put(String key, Boolean value) {
+    mValues.put(key, value);
+    mTypes.put(key, ElementType.BOOLEAN);
+  }
 
-    /**
-     * Gets a value and converts it to a Float.
-     * 
-     * @param key
-     *            the value to get
-     * @return the Float value, or null if the value is missing or cannot be converted
-     */
-    public Float getAsFloat(String key) {
-        return mValues.getAsFloat(key);
-    }
+  /**
+   * Adds a value to the set.
+   * 
+   * @param key
+   *          the name of the value to put
+   * @param value
+   *          the data for the value to put
+   */
+  public void put(String key, Byte value) {
+    mValues.put(key, value);
+    mTypes.put(key, ElementType.INTEGER);
+  }
 
-    /**
-     * Gets a value and converts it to an Integer.
-     * 
-     * @param key
-     *            the value to get
-     * @return the Integer value, or null if the value is missing or cannot be converted
-     */
-    public Integer getAsInteger(String key) {
-        return mValues.getAsInteger(key);
-    }
+  /**
+   * Adds a value to the set.
+   * 
+   * @param key
+   *          the name of the value to put
+   * @param value
+   *          the data for the value to put
+   */
+  public void put(String key, byte[] value) {
+    mValues.put(key, value);
+    mTypes.put(key, ElementType.BLOB);
+  }
 
-    /**
-     * Gets a value and converts it to a Long.
-     * 
-     * @param key
-     *            the value to get
-     * @return the Long value, or null if the value is missing or cannot be converted
-     */
-    public Long getAsLong(String key) {
-        return mValues.getAsLong(key);
-    }
+  /**
+   * Adds a value to the set.
+   * 
+   * @param key
+   *          the name of the value to put
+   * @param value
+   *          the data for the value to put
+   */
+  public void put(String key, Double value) {
+    mValues.put(key, value);
+    mTypes.put(key, ElementType.REAL);
+  }
 
-    /**
-     * Gets a value and converts it to a Short.
-     * 
-     * @param key
-     *            the value to get
-     * @return the Short value, or null if the value is missing or cannot be converted
-     */
-    public Short getAsShort(String key) {
-        return mValues.getAsShort(key);
-    }
+  /**
+   * Adds a value to the set.
+   * 
+   * @param key
+   *          the name of the value to put
+   * @param value
+   *          the data for the value to put
+   */
+  public void put(String key, Float value) {
+    mValues.put(key, value);
+    mTypes.put(key, ElementType.REAL);
+  }
 
-    /**
-     * Gets a value and converts it to a String.
-     * 
-     * @param key
-     *            the value to get
-     * @return the String for the value
-     */
-    public String getAsString(String key) {
-        return mValues.getAsString(key);
-    }
+  /**
+   * Adds a value to the set.
+   * 
+   * @param key
+   *          the name of the value to put
+   * @param value
+   *          the data for the value to put
+   */
+  public void put(String key, Integer value) {
+    mValues.put(key, value);
+    mTypes.put(key, ElementType.INTEGER);
+  }
 
-    /**
-     * Get the type of a value.
-     * 
-     * @param key
-     *            the value to get
-     * @return the type of the value, or null is the value is missing
-     */
-    public ElementType getType(String key) {
-        return mTypes.get(key);
-    }
+  /**
+   * Adds a value to the set.
+   * 
+   * @param key
+   *          the name of the value to put
+   * @param value
+   *          the data for the value to put
+   */
+  public void put(String key, Long value) {
+    mValues.put(key, value);
+    mTypes.put(key, ElementType.INTEGER);
+  }
 
-    @Override
-    public int hashCode() {
-        int code = 17;
-        code = 31 * code + mValues.hashCode();
-        code = 31 * code + mTypes.hashCode();
-        return code;
-    }
+  /**
+   * Adds a value to the set.
+   * 
+   * @param key
+   *          the name of the value to put
+   * @param value
+   *          the data for the value to put
+   */
+  public void put(String key, Short value) {
+    mValues.put(key, value);
+    mTypes.put(key, ElementType.INTEGER);
+  }
 
-    /**
-     * Adds a value to the set.
-     * 
-     * @param key
-     *            the name of the value to put
-     * @param value
-     *            the data for the value to put
-     */
-    public void put(String key, Boolean value) {
-        mValues.put(key, value);
-        mTypes.put(key, ElementType.BOOLEAN);
-    }
+  /**
+   * Adds a value to the set.
+   * 
+   * @param key
+   *          the name of the value to put
+   * @param value
+   *          the data for the value to put
+   */
+  public void put(String key, String value) {
+    mValues.put(key, value);
+    mTypes.put(key, ElementType.TEXT);
+  }
 
-    /**
-     * Adds a value to the set.
-     * 
-     * @param key
-     *            the name of the value to put
-     * @param value
-     *            the data for the value to put
-     */
-    public void put(String key, Byte value) {
-        mValues.put(key, value);
-        mTypes.put(key, ElementType.INTEGER);
-    }
+  /**
+   * Adds all values from the passed in ContentValues.
+   * 
+   * @param other
+   *          the ContentValues from which to copy
+   */
+  public void putAll(TypedContentValues other) {
+    mValues.putAll(other.mValues);
+    mTypes.putAll(other.mTypes);
+  }
 
-    /**
-     * Adds a value to the set.
-     * 
-     * @param key
-     *            the name of the value to put
-     * @param value
-     *            the data for the value to put
-     */
-    public void put(String key, byte[] value) {
-        mValues.put(key, value);
-        mTypes.put(key, ElementType.BLOB);
-    }
+  /**
+   * Adds a null value to the set.
+   * 
+   * @param key
+   *          the name of the value to make null
+   */
+  public void putNull(String key) {
+    mValues.putNull(key);
+    mTypes.put(key, null);
+  }
 
-    /**
-     * Adds a value to the set.
-     * 
-     * @param key
-     *            the name of the value to put
-     * @param value
-     *            the data for the value to put
-     */
-    public void put(String key, Double value) {
-        mValues.put(key, value);
-        mTypes.put(key, ElementType.REAL);
-    }
+  /**
+   * Remove a single value.
+   * 
+   * @param key
+   *          the name of the value to remove
+   */
+  public void remove(String key) {
+    mValues.remove(key);
+    mTypes.remove(key);
+  }
 
-    /**
-     * Adds a value to the set.
-     * 
-     * @param key
-     *            the name of the value to put
-     * @param value
-     *            the data for the value to put
-     */
-    public void put(String key, Float value) {
-        mValues.put(key, value);
-        mTypes.put(key, ElementType.REAL);
-    }
+  /**
+   * Returns the number of values.
+   * 
+   * @return the number of values
+   */
+  public int size() {
+    return mValues.size();
+  }
 
-    /**
-     * Adds a value to the set.
-     * 
-     * @param key
-     *            the name of the value to put
-     * @param value
-     *            the data for the value to put
-     */
-    public void put(String key, Integer value) {
-        mValues.put(key, value);
-        mTypes.put(key, ElementType.INTEGER);
-    }
+  public Set<String> keySet() {
+    return mTypes.keySet();
+  }
 
-    /**
-     * Adds a value to the set.
-     * 
-     * @param key
-     *            the name of the value to put
-     * @param value
-     *            the data for the value to put
-     */
-    public void put(String key, Long value) {
-        mValues.put(key, value);
-        mTypes.put(key, ElementType.INTEGER);
-    }
+  /**
+   * Create a {@link ContentValues} instance with the contents of this instance.
+   */
 
-    /**
-     * Adds a value to the set.
-     * 
-     * @param key
-     *            the name of the value to put
-     * @param value
-     *            the data for the value to put
-     */
-    public void put(String key, Short value) {
-        mValues.put(key, value);
-        mTypes.put(key, ElementType.INTEGER);
-    }
+  public ContentValues toContentValues() {
+    return new ContentValues(mValues);
+  }
 
-    /**
-     * Adds a value to the set.
-     * 
-     * @param key
-     *            the name of the value to put
-     * @param value
-     *            the data for the value to put
-     */
-    public void put(String key, String value) {
-        mValues.put(key, value);
-        mTypes.put(key, ElementType.TEXT);
-    }
-
-    /**
-     * Adds all values from the passed in ContentValues.
-     * 
-     * @param other
-     *            the ContentValues from which to copy
-     */
-    public void putAll(TypedContentValues other) {
-        mValues.putAll(other.mValues);
-        mTypes.putAll(other.mTypes);
-    }
-
-    /**
-     * Adds a null value to the set.
-     * 
-     * @param key
-     *            the name of the value to make null
-     */
-    public void putNull(String key) {
-        mValues.putNull(key);
-        mTypes.put(key, null);
-    }
-
-    /**
-     * Remove a single value.
-     * 
-     * @param key
-     *            the name of the value to remove
-     */
-    public void remove(String key) {
-        mValues.remove(key);
-        mTypes.remove(key);
-    }
-
-    /**
-     * Returns the number of values.
-     * 
-     * @return the number of values
-     */
-    public int size() {
-        return mValues.size();
-    }
-    
-    public Set<String> keySet() {
-        return mTypes.keySet();
-    }
-
-    /**
-     * Create a {@link ContentValues} instance with the contents of this instance.
-     */
-
-    public ContentValues toContentValues() {
-        return new ContentValues(mValues);
-    }
-
-    /**
-     * Returns a set of all of the keys and values
-     * 
-     * @return a set of all of the keys and values
-     */
-    public Set<Map.Entry<String, Object>> valueSet() {
-        return mValues.valueSet();
-    }
+  /**
+   * Returns a set of all of the keys and values
+   * 
+   * @return a set of all of the keys and values
+   */
+  public Set<Map.Entry<String, Object>> valueSet() {
+    return mValues.valueSet();
+  }
 }
