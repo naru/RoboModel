@@ -293,6 +293,8 @@ public abstract class RoboModel {
           final String str = (String) method.invoke(value);
           cv.put(field.getName(), str);
         }
+      } else if (field.isAnnotationPresent(HasMany.class)) {
+        // Do nothing - children are saved afterwards
       } else if (field.isAnnotationPresent(BelongsTo.class)) {
         RoboModel parent = (RoboModel) field.get(this);
         if (parent != null) {
